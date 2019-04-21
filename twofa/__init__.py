@@ -6,6 +6,7 @@ import base64
 import getpass
 import binascii
 
+import re
 import click
 import pyotp
 import pyqrcode
@@ -54,7 +55,7 @@ class Store(object):
                 data = yaml.load(outfile)
             try:
                 if data['encrypted']:
-                    self.passwd = getpass.getpass("Enter password:")
+                    self.passwd = getpass.getpass("Enter store password: ")
                     self.encrypted = True
                     try:
                         data['secrets'] = decrypt(
@@ -63,6 +64,7 @@ class Store(object):
                     except InvalidToken:
                         raise click.ClickException("Invalid password")
 
+                click.echo("OK\n")
                 return data['secrets']
             except KeyError:
                 return data
@@ -98,53 +100,59 @@ def totp(secret):
 @click.group(invoke_without_command=True)
 @click.pass_context
 def cli(ctx):
+    """ 2fa - Manage two-factor authentication store """
     if ctx.invoked_subcommand is None:
         return listcmd()
 
 
 @cli.command(name='list')
-def listcmd():
-    """ List all tokens. """
+@click.argument('pattern', default="")
+def listcmd(pattern):
+    """ List secrets that match regex pattern """
     store = Store()
     secrets = store.load_secrets()
 
+    some = False
     for label, secret in secrets.items():
-        click.echo("{} - {}".format(totp(secret), label))
+        #if pattern == "" or re.match(pattern+"$", label):
+        if pattern == "" or re.search(pattern, label, re.IGNORECASE):
+            click.echo("{}  {}".format(totp(secret), label))
+            some = True
 
-    click.echo("")
-    expire = 30 - (int(time.time()) % 30)
-    click.echo("Tokens expire in: {}s".format(expire))
+    if some:
+        expire = 30-(int(time.time())%30)
+        click.echo("\nExpiration in {} seconds".format(expire))
+    else:
+        click.echo("Nothing found matching pattern '{}'".format(pattern))
 
 
 @cli.command(name='add')
 @click.argument('label')
 @click.argument('secret')
 def addcmd(label, secret):
-    """ Adds secret to store. """
+    """ Add secret to store """
     store = Store()
     secrets = store.load_secrets()
 
     if secrets.get(label):
-        raise click.ClickException("Service '{}' already found. Aborting.".format(label))
+        raise click.ClickException("Label '{}' already present, aborting".format(label))
 
     try:
         secret = "".join(secret.split())
         totp(secret)
         secrets[label] = secret
     except (TypeError, binascii.Error):
-        raise click.ClickException(
-            "Could not parse secret. Make sure to only use Base32 characters"
-            " and no spaces"
-        )
+        raise click.ClickException("Invalid secret! Only A-Z and 2-7 allowed, and no spaces, aborting")
 
     store.save_secrets(secrets)
+    click.echo("Secret stored with label '{}'".format(label))
 
 
 @cli.command(name='rename')
 @click.argument('label')
 @click.argument('new_label')
 def renamecmd(label, new_label):
-    """ Renames secret in store. """
+    """ Rename secret in store """
     store = Store()
     secrets = store.load_secrets()
 
@@ -152,39 +160,42 @@ def renamecmd(label, new_label):
         secrets[new_label] = secrets[label]
         del secrets[label]
     except KeyError:
-        raise click.ClickException("Service '{}' not found. Aborting.".format(label))
+        raise click.ClickException("Label '{}' not present, aborting".format(label))
 
     store.save_secrets(secrets)
+    click.echo("Label '{}' renamed to '{}'".format(label, new_label))
 
 
-@cli.command(name='rm')
+@cli.command(name='remove')
 @click.argument('label')
 @click.option('--confirm/--no-confirm', default=False)
 def rmcmd(label, confirm):
-    """ Removes secret from store.
-
-    Must be confirmed using the --confirm flag.
-
-    """
+    """ Remove secret: --confirm option required! """
     store = Store()
     secrets = store.load_secrets()
 
+    try:
+        if secrets[label]: pass
+    except KeyError:
+        raise click.ClickException("Label '{}' not present, aborting".format(label))
+
     if not confirm:
-        raise click.UsageError("Please confirm removal using --confirm option. Aborting.")
+        raise click.ClickException("The --confirm option is required, aborting")
 
     try:
         del secrets[label]
     except KeyError:
-        raise click.ClickException("Service '{}' not found. Aborting.".format(label))
+        raise click.ClickException("Label '{}' not present, aborting".format(label))
 
     store.save_secrets(secrets)
+    click.echo("Label '{}' removed with secret".format(label))
 
 
 @cli.command(name='qr')
 @click.argument('label')
 @click.option('--invert/--no-invert', default=False)
 def qrcmd(label, invert):
-    """ Prints QR code for single secret. """
+    """ Print QR code for secret """
     store = Store()
     secrets = store.load_secrets()
     secret = secrets.get(label)
@@ -200,19 +211,20 @@ def qrcmd(label, invert):
         else:
             click.echo(qr.terminal(quiet_zone=1))
     else:
-        raise click.ClickException("Service '{}' not found.".format(label))
+        raise click.ClickException("Label '{}' not present".format(label))
 
 
-@cli.command(name='passwd')
+@cli.command(name='password')
 def passwdcmd():
-    """ Sets new password for store. Empty password disables encryption. """
+    """ Set password: empty = no encryption! """
     store = Store()
     secrets = store.load_secrets()
 
-    newpasswd = getpass.getpass("Enter new password:")
-    confirmpasswd = getpass.getpass("Confirm new password:")
+    newpasswd = getpass.getpass("Enter new store password: ")
+    confirmpasswd = getpass.getpass("Confirm new store password: ")
 
     if not newpasswd == confirmpasswd:
-        raise click.ClickException("New passwords did not match. Aborting.")
+        raise click.ClickException("New store passwords not matching, aborting")
 
     store.save_secrets(secrets, newpasswd)
+    click.echo("New password set")
