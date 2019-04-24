@@ -16,6 +16,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+version='0.11'
 
 def create_fernet(passwd, salt=None):
     if salt is None:
@@ -97,10 +98,11 @@ def totp(secret):
     return pyotp.TOTP(secret).now()
 
 
+@click.version_option(version=version)
 @click.group(invoke_without_command=True)
 @click.pass_context
 def cli(ctx):
-    """ 2fa - Manage two-factor authentication store """
+    """ twofa - Manage two-factor authentication store """
     if ctx.invoked_subcommand is None:
         return listcmd()
 
