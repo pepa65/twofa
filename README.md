@@ -1,4 +1,5 @@
 # twofa
+**Version 0.23**
 
 A command-line 2-factor authentication manager.
 

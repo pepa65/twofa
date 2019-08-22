@@ -14,7 +14,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-version = '0.22'
+version = '0.23'
 configfile = '~/.twofa.yaml'
 
 def create_fernet(passwd, salt=None):
@@ -126,7 +126,8 @@ def addcmd(label):
 				click.echo("No: invalid base32 secret")
 		if secret != "":
 			store.save_secrets(secrets)
-			click.echo("Secret {} stored with label '{}'".format(secret, label))
+			click.clear()
+			click.echo("Secret stored with label '{}'".format(label))
 
 @cli.command(name='rename')
 @click.argument('label')

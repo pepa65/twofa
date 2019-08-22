@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='twofa',
-    version='0.22',
+    version='0.23',
     description='A simple command-line 2-factor authentication token manager',
     author='Nils Werner, pepa65',
     author_email='pepa65@passchier.net',
