@@ -1,52 +1,48 @@
 # twofa
 **Version 0.23**
 
-A command-line 2-factor authentication manager.
-
+Manage two-factor authentication store
 
 ## Installation
 
-    pip install twofa
-
+    git clone https://gitlab.com/pepa65/twofa
+    cd twofa
+    python3 setup.py build
+    sudo python3 setup.py install
 
 ## Usage
 
-**Print Token**
+**Display all tokens**
 
-    twofa
+    twofa [list]
+
+**Display tokens whose labels match a regular expression**
+
+    twofa list 'Regex'
 
 **Add secret**
 
-    twofa add 'Service Name' 'Secret'
+    twofa add 'Label name' 'Secret'
 
 **Delete secret**
 
-    twofa rm --confirm 'Service Name'
+    twofa remove [--confirm] 'Label name'
 
-**Rename Service**
+**Rename label**
 
-    twofa rename 'Service Name' 'New Name'
+    twofa rename 'Label name' 'New name'
 
 **Encrypt store**
 
-    twofa passwd
+    twofa password
 
-You will be asked to enter a new password. If you leave this password empty,
-the data will be stored unencrypted.
+You will be asked to enter a new password. If you leave this password empty, the data will be stored unencrypted.
 
-**Print QR code**
+**Display QR for secret**
 
-    twofa qr 'Service Name'
+    twofa qr 'Label name'
 
-if you are using a light terminal theme:
+Better visibility with a light terminal theme:
 
-    twofa qr --invert 'Service Name'
+    twofa qr [--invert|-i] 'Label name'
 
-
-### Bash autocomplete
-
-We are using [Click bash integration](http://click.pocoo.org/5/bashcomplete/), which means you only need to add
-
-    eval "$(_2FA_COMPLETE=source twofa)"
-
-to your `~/.bashrc` to get autocompletion.

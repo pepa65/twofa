@@ -155,13 +155,13 @@ def renamecmd(label, new_label):
 		prompt="Are you sure you want to remove this label?",
 		help="Option --confirm is required for remove")
 def rmcmd(label, confirm):
-	"""Remove secret: --confirm option required!"""
+	"""Remove secret: --confirm option will force!"""
 	store = Store()
 	secrets = store.load_secrets()
 	if not secrets[label]:
 		raise click.ClickException("label '{}' does not exist".format(label))
 	elif not confirm:
-		raise click.ClickException("--confirm option is required")
+		raise click.ClickException("--confirm option will force removal")
 	else:
 		del secrets[label]
 		store.save_secrets(secrets)
