@@ -14,7 +14,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-version = '0.23'
+version = '0.24'
 configfile = '~/.twofa.yaml'
 
 def create_fernet(passwd, salt=None):
@@ -37,7 +37,7 @@ def encrypt(data, passwd):
 def decrypt(data, passwd, salt):
 	salt = base64.b64decode(salt)
 	f, _ = create_fernet(passwd, salt)
-	return yaml.load(f.decrypt(data.encode()))
+	return yaml.load(f.decrypt(data.encode()), Loader=yaml.SafeLoader)
 
 class Store(object):
 	encrypted = False
@@ -45,7 +45,7 @@ class Store(object):
 	def load_secrets(self):
 		try:
 			with open(os.path.expanduser(configfile), 'r') as outfile:
-				data = yaml.load(outfile)
+				data = yaml.load(outfile, Loader=yaml.SafeLoader)
 			try:
 				if data['encrypted']:
 					self.passwd = getpass.getpass("Enter store password: ")
@@ -86,11 +86,11 @@ def totp(secret):
 def cli(ctx):
 	"""twofa - Manage two-factor authentication store"""
 	if ctx.invoked_subcommand is None:
-		return listcmd()
+		return showcmd()
 
-@cli.command(name='list')
+@cli.command(name='show')
 @click.argument('pattern', default="")
-def listcmd(pattern):
+def showcmd(pattern):
 	"""List secrets that match regex pattern"""
 	store = Store()
 	secrets = store.load_secrets()

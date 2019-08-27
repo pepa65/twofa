@@ -3,22 +3,32 @@
 
 Manage two-factor authentication store
 
+## Requirements
+
+    dev
+    setuptools
+    cryptography
+
+Either python2.7 or python3 work, install the corresponding packages first:
+python-dev, python-setuptools, python-cryptography or
+python3-dev, python3-setuptools, python3-cryptography.
+
 ## Installation
 
     git clone https://gitlab.com/pepa65/twofa
     cd twofa
-    python3 setup.py build
-    sudo python3 setup.py install
+    python setup.py build
+    sudo python setup.py install
 
 ## Usage
 
 **Display all tokens**
 
-    twofa [list]
+    twofa [show]
 
 **Display tokens whose labels match a regular expression**
 
-    twofa list 'Regex'
+    twofa show 'Regex'
 
 **Add secret**
 
