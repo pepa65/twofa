@@ -84,14 +84,14 @@ def totp(secret):
 @click.group(invoke_without_command=True)
 @click.pass_context
 def cli(ctx):
-	"""twofa - Manage two-factor authentication store"""
+	"""twofa - Manage two-factor authentication store on the command-line"""
 	if ctx.invoked_subcommand is None:
 		return showcmd()
 
 @cli.command(name='show')
 @click.argument('pattern', default="")
 def showcmd(pattern):
-	"""List TOTP of secrets with labels that match regex pattern"""
+	"""Display tokens whose labels match regex pattern"""
 	store = Store()
 	secrets = store.load_secrets()
 	list = ""
@@ -100,7 +100,7 @@ def showcmd(pattern):
 		if pattern == "" or re.search(pattern, label, re.IGNORECASE):
 			list += "{}    {:2d} s    {}\n".format(totp(secret), expire, label)
 	if list != "":
-		header = " TOTP    Expire    Label\n".format(expire)
+		header = " Token   Expire    Label\n".format(expire)
 		click.echo_via_pager(header+list)
 	else:
 		click.echo("No match for '{}'".format(pattern))

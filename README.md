@@ -1,7 +1,7 @@
 # twofa
 **Version 0.25**
 
-Manage two-factor authentication store
+Manage two-factor authentication store on the command-line
 
 ## Requirements
     dev
@@ -23,23 +23,25 @@ Either python2.7 or python3 work, install the corresponding packages first:
 
     twofa [show]
 
-**Display tokens whose labels match a regular expression**
+**Display tokens whose labels match regex pattern**
 
     twofa show 'Regex'
 
-**Add secret**
+**Add secret to store**
 
     twofa add 'Label name' 'Secret'
 
-**Delete secret**
+**Remove secret**
 
     twofa remove [--confirm] 'Label name'
 
-**Rename label**
+The --confirm option will force the removal.
+
+**Rename the label of a secret in store**
 
     twofa rename 'Label name' 'New name'
 
-**Encrypt store**
+**Set password**
 
     twofa password
 
@@ -49,7 +51,7 @@ You will be asked to enter a new password. If you leave this password empty, the
 
     twofa secret 'Label name'
 
-**Display QR for secret**
+**Display QR code for secret**
 
     twofa qr 'Label name'
 
