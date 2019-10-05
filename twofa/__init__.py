@@ -14,7 +14,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-version = '0.24'
+version = '0.25'
 configfile = '~/.twofa.yaml'
 
 def create_fernet(passwd, salt=None):
@@ -91,7 +91,7 @@ def cli(ctx):
 @cli.command(name='show')
 @click.argument('pattern', default="")
 def showcmd(pattern):
-	"""List secrets that match regex pattern"""
+	"""List TOTP of secrets with labels that match regex pattern"""
 	store = Store()
 	secrets = store.load_secrets()
 	list = ""
@@ -133,7 +133,7 @@ def addcmd(label):
 @click.argument('label')
 @click.argument('new_label')
 def renamecmd(label, new_label):
-	"""Rename secret in store"""
+	"""Rename the label of a secret in store"""
 	store = Store()
 	secrets = store.load_secrets()
 	try: secrets[label]
@@ -167,12 +167,24 @@ def rmcmd(label, confirm):
 		store.save_secrets(secrets)
 		click.echo("Secret and label '{}' removed".format(label))
 
+@cli.command(name='secret')
+@click.argument('label')
+def secretcmd(label):
+	"""Display secret"""
+	store = Store()
+	secrets = store.load_secrets()
+	secret = secrets.get(label)
+	if secret:
+		click.echo('{}: {}'.format(label, secret.upper()))
+	else:
+		raise click.ClickException("label '{}' does not exist".format(label))
+
 @cli.command(name='qr')
 @click.argument('label')
 @click.option('--invert', '-i', is_flag=True,
 		help="White on black instead")
 def qrcmd(label, invert):
-	"""Print QR code for secret"""
+	"""Display QR code for secret"""
 	store = Store()
 	secrets = store.load_secrets()
 	secret = secrets.get(label)

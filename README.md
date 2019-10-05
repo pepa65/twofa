@@ -1,27 +1,24 @@
 # twofa
-**Version 0.23**
+**Version 0.25**
 
 Manage two-factor authentication store
 
 ## Requirements
-
     dev
     setuptools
     cryptography
 
 Either python2.7 or python3 work, install the corresponding packages first:
-python-dev, python-setuptools, python-cryptography or
-python3-dev, python3-setuptools, python3-cryptography.
+`python-dev python-setuptools python-cryptography` or
+`python3-dev python3-setuptools python3-cryptography`.
 
 ## Installation
-
     git clone https://gitlab.com/pepa65/twofa
     cd twofa
     python setup.py build
     sudo python setup.py install
 
 ## Usage
-
 **Display all tokens**
 
     twofa [show]
@@ -47,6 +44,10 @@ python3-dev, python3-setuptools, python3-cryptography.
     twofa password
 
 You will be asked to enter a new password. If you leave this password empty, the data will be stored unencrypted.
+
+**Display secret**
+
+    twofa secret 'Label name'
 
 **Display QR for secret**
 
