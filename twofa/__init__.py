@@ -9,12 +9,13 @@ import binascii
 import pyotp
 import pyqrcode
 import yaml
+import subprocess
 from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-version = '0.25'
+version = '0.26'
 configfile = '~/.twofa.yaml'
 
 def create_fernet(passwd, salt=None):
@@ -84,7 +85,7 @@ def totp(secret):
 @click.group(invoke_without_command=True)
 @click.pass_context
 def cli(ctx):
-	"""twofa - Manage two-factor authentication store on the command-line"""
+	"""twofa - Manage a two-factor authentication store on the commandline"""
 	if ctx.invoked_subcommand is None:
 		return showcmd()
 
@@ -98,10 +99,12 @@ def showcmd(pattern):
 	expire = 30-(int(time.time())%30)
 	for label, secret in secrets.items():
 		if pattern == "" or re.search(pattern, label, re.IGNORECASE):
-			list += "{}    {:2d} s    {}\n".format(totp(secret), expire, label)
+			list += "\n{}    {:2d} s    {}".format(totp(secret), expire, label)
 	if list != "":
-		header = " Token   Expire    Label\n".format(expire)
+		header = " Token   Expire    Label".format(expire)
 		click.echo_via_pager(header+list)
+		click.pause("Press a key to clear the screen")
+		subprocess.call(['tput', 'reset'])
 	else:
 		click.echo("No match for '{}'".format(pattern))
 
@@ -126,7 +129,7 @@ def addcmd(label):
 				click.echo("No: invalid base32 secret")
 		if secret != "":
 			store.save_secrets(secrets)
-			click.clear()
+			subprocess.call(['tput', 'reset'])
 			click.echo("Secret stored with label '{}'".format(label))
 
 @cli.command(name='rename')
@@ -176,6 +179,8 @@ def secretcmd(label):
 	secret = secrets.get(label)
 	if secret:
 		click.echo('{}: {}'.format(label, secret.upper()))
+		click.pause("Press a key to clear the screen")
+		subprocess.call(['tput', 'reset'])
 	else:
 		raise click.ClickException("label '{}' does not exist".format(label))
 
@@ -189,13 +194,17 @@ def qrcmd(label, invert):
 	secrets = store.load_secrets()
 	secret = secrets.get(label)
 	if secret:
-		qr = pyqrcode.create('otpauth://totp/{}?secret={}'.format(label, secret.upper()))
+		# Google URI: 'otpauth://totp/ISSUER:ACCT?secret=SECRET&issuer=ISSUER'
+		qr = pyqrcode.create('otpauth://totp/o?secret={}'.format(secret.lower()),
+				error='L')
 		if invert:
 			click.echo(qr.terminal(module_color='white', background='black',
 					quiet_zone=1))
 		else:
 			click.echo(qr.terminal(module_color='black', background='white',
 					quiet_zone=1))
+		click.pause("Press a key to clear the screen")
+		subprocess.call(['tput', 'reset'])
 	else:
 		raise click.ClickException("label '{}' does not exist".format(label))
 

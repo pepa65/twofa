@@ -2,8 +2,8 @@ import setuptools
 
 setuptools.setup(
     name='twofa',
-    version='0.25',
-    description='Manage two-factor authentication store on the command-line',
+    version='0.26',
+    description='Manage a two-factor authentication store on the commandline',
     author='Nils Werner, pepa65',
     author_email='pepa65@passchier.net',
     license='GPLv3+',
