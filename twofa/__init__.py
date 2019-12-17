@@ -15,7 +15,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-version = '0.26'
+version = '0.27'
 configfile = '~/.twofa.yaml'
 
 def create_fernet(passwd, salt=None):
@@ -97,11 +97,20 @@ def showcmd(pattern):
 	secrets = store.load_secrets()
 	list = ""
 	expire = 30-(int(time.time())%30)
+	if expire < 10:
+		time.sleep(expire)
+		expire=30
+	n = 0
 	for label, secret in secrets.items():
 		if pattern == "" or re.search(pattern, label, re.IGNORECASE):
-			list += "\n{}    {:2d} s    {}".format(totp(secret), expire, label)
+			n += 1
+			if n%2 == 1: list += "\n"
+			list += "{}  {:24.20}".format(totp(secret), label)
 	if list != "":
-		header = " Token   Expire    Label".format(expire)
+		if n > 1:
+			header = " Token   Label     Expiry: {}s   Token   Label".format(expire)
+		else:
+			header = " Token   Label     Expiry: {}s".format(expire)
 		click.echo_via_pager(header+list)
 		click.pause("Press a key to clear the screen")
 		subprocess.call(['tput', 'reset'])
