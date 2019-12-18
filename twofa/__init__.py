@@ -1,6 +1,7 @@
 from __future__ import print_function, absolute_import
 import os
 import time
+import signal
 import base64
 import getpass
 import re
@@ -15,8 +16,9 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-version = '0.27'
+version = '0.28'
 configfile = '~/.twofa.yaml'
+
 
 def create_fernet(passwd, salt=None):
 	if salt is None:
@@ -89,33 +91,41 @@ def cli(ctx):
 	if ctx.invoked_subcommand is None:
 		return showcmd()
 
+def wipe(signum, frame):
+	subprocess.call(['tput', 'reset'])
+	exit(0)
+
 @cli.command(name='show')
 @click.argument('pattern', default="")
 def showcmd(pattern):
 	"""Display tokens whose labels match regex pattern"""
 	store = Store()
 	secrets = store.load_secrets()
-	list = ""
-	expire = 30-(int(time.time())%30)
-	if expire < 10:
-		time.sleep(expire)
-		expire=30
-	n = 0
-	for label, secret in secrets.items():
-		if pattern == "" or re.search(pattern, label, re.IGNORECASE):
-			n += 1
-			if n%2 == 1: list += "\n"
-			list += "{}  {:24.20}".format(totp(secret), label)
-	if list != "":
-		if n > 1:
-			header = " Token   Label     Expiry: {}s   Token   Label".format(expire)
+	signal.signal(signal.SIGINT, wipe)
+	col = 2
+	while True:
+		expire = 30-(int(time.time())%30)
+		list = ""
+		n = 0
+		for label, secret in secrets.items():
+			if pattern == "" or re.search(pattern, label, re.IGNORECASE):
+				n += 1
+				list += " {:>8.8s}  {:22.25s}".format(totp(secret), label)
+				if n%col == 0: list += "\n"
+		if list != "":
+			subprocess.call(['tput', 'reset'])
+			header = "    TOTP    Label"
+			if n > 1: header += " "*16+header
+			header += "\n"
+			if n%col > 0: list += "\n"
+			click.echo(header+list, nl=False)
+			while expire > 0:
+				click.echo("    Expire in: {:5}(quit with Ctrl+C) \r".
+					format(str(expire)+"s"), nl=False)
+				time.sleep(1)
+				expire -= 1
 		else:
-			header = " Token   Label     Expiry: {}s".format(expire)
-		click.echo_via_pager(header+list)
-		click.pause("Press a key to clear the screen")
-		subprocess.call(['tput', 'reset'])
-	else:
-		click.echo("No match for '{}'".format(pattern))
+			click.echo("No match for '{}'".format(pattern))
 
 @cli.command(name='add')
 @click.argument('label')

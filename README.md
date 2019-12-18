@@ -1,5 +1,5 @@
 # twofa
-**Version 0.27**
+**Version 0.28**
 
 Manage a two-factor authentication store on the commandline
 
